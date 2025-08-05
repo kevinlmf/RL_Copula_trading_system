@@ -1,88 +1,92 @@
-# RL_trading_system
 
-This project implements a modular reinforcement learning (RL) trading system with multiple strategies including PPO, DQN, and Random policies. It features a custom trading environment and supports evaluation on both simulated (Copula-based) and real financial data.
+# RL_Copula_trading_system
 
----
+A hybrid algorithmic trading system integrating **Reinforcement Learning (RL)** with **Copula-based risk modeling**. This project benchmarks multiple trading strategies—including SAC, CPPO, Equal Weight, Buy-and-Hold, and Copula-CVaR optimization—under real-world financial data, and provides cumulative return plots and strategy performance metrics.
+
+## 📌 Features
+
+- ✅ Deep RL agents: Soft Actor-Critic (SAC), Constrained PPO (CPPO)
+- ✅ Copula-based CVaR risk optimization using Gaussian Copula
+- ✅ Baseline strategies: Equal Weight, Buy & Hold
+- ✅ Performance metrics: Annual Return, Sharpe Ratio, Max Drawdown
+- ✅ Full backtesting & visualization pipeline
 
 ## 📁 Project Structure
 
 ```
-RL_trading_system/
-│
-├── scripts/              # Training, testing, and data download scripts
-│
-├── cpp_implementation/   # (Optional) High-performance C++ modules (if used)
-│
-├── theory/               # LaTeX documents: financial math, RL theory, copula modeling
-│
-├── 3_data/
-│   ├── low_dimension/      # Simulated or real market data
-│   └── processed/          # Cleaned CSVs
-│
-├── 4_learning/
-│   ├── env/                # Custom TradingEnv implementation
-│   └── strategy/
-│       ├── rl/
-│       │   ├── dqn/        # DQN agent and model
-│       │   ├── ppo/        # PPO agent and model
-│       │   └── random/     # Random policy baseline
-│       └── shared/         # Common reward functions, utilities, etc.
-│
-├── 5_evaluation/           # Scripts for evaluating and comparing strategies
-│
-├── Dockerfile              # Environment setup (optional)
-├── requirements.txt        # Python dependencies
-└── README.md               # Project introduction (this file)
+RL_Copula_trading_system/
+├── learning/                # Core logic (env, agent, copula, strategy)
+├── results/                 # Strategy returns & plots
+├── scripts/                 # Training scripts & strategy runners
+├── compare_strategies.py    # Evaluation & visualization
+└── run_all_strategies.py    # One-click strategy execution
 ```
 
----
+## 🚀 How to Run
 
-## 🧠 Key Features
+1. **Install dependencies** (Python ≥ 3.8):
 
-- **Custom Trading Environment:** With position tracking, account balance, and action history
-- **Multiple Strategies:** PPO, DQN, and a Random policy baseline
-- **Copula-Simulated Market Data:** For structured risk modeling
-- **Evaluation Metrics:** Total reward, Sharpe ratio, maximum drawdown
-- **Modular Design:** Clean separation of strategy, environment, and evaluation
-
----
-
-## 🚀 Getting Started
-
-### 1. Clone this repository
 ```bash
-git clone https://github.com/kevinlmf/RL_trading_system.git
-cd RL_trading_system
-```
-
-### 2. Set up the environment
-```bash
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3. Run training (e.g., PPO)
+2. **Run all strategies:**
+
 ```bash
-python 0_scripts/train_ppo.py
+export PYTHONPATH=.
+python run_all_strategies.py
 ```
 
-### 4. Evaluate strategies
+3. **Compare strategies:**
+
 ```bash
-python 5_evaluation/evaluate_strategies.py
+python compare_strategies.py
 ```
+
+4. **Output:**
+
+- 📈 `results/strategy_comparison.png`
+- 📄 `results/strategy_metrics_summary.csv`
+
+## 📊 Example Metrics (Auto-generated)
+
+| Strategy         | Annual Return (%) | Sharpe Ratio | Max Drawdown (%) |
+|------------------|-------------------|--------------|------------------|
+| Buy & Hold       | 79.92             | 1.26         | -34.34           |
+| SAC              | 18.18             | 0.62         | -38.53           |
+| Equal Weight     | 13.83             | 0.41         | -36.21           |
+| Copula CVaR Opt  | 14.00             | 0.41         | -36.20           |
+| CPPO             | 0.44              | 0.01         | -74.83           |
+
+## 🧠 Background
+
+- **Copula models** capture joint dependence structures beyond correlation.
+- **CVaR optimization** targets extreme risk scenarios.
+- **RL agents** learn to optimize portfolio allocation under uncertainty.
+
+## 📈 Future Work
+
+- ⚡ Train RL agents using GPU acceleration for speed and scalability
+- 🤖 Add more advanced RL algorithms (e.g., TD3, PPO-Lagrangian, Offline RL)
+- 💹 Extend to more financial environments such as **high-frequency trading (HFT)**
+- 🔗 Explore more sophisticated copula structures (e.g., **vine copula**, **factor copula**)
+- 🧮 Apply to broader financial tasks including **portfolio optimization**, **hedging**, and **risk control**
+
+## 📚 Dependencies
+
+- `numpy`, `pandas`, `matplotlib`
+- `torch` for deep RL
+- `scipy` for optimization
+- `gym`-style custom environments
+
+## 🧑‍💻 Author
+
+**Kevin Long (kevinlmf)**  
+Graduate Student @ University of Michigan  
+[GitHub](https://github.com/kevinlmf)
 
 ---
 
-## 🧩 Notes
+## 📄 License
 
-- PPO uses Generalized Advantage Estimation (GAE)
-- DQN uses epsilon-greedy exploration with replay buffer
-- Trading environment supports discrete Buy / Hold / Sell actions
-- Evaluation averages over multiple episodes
-
----
-
-## 📬 Contact
-
-Feel free to reach out via [GitHub Issues](https://github.com/kevinlmf/RL_trading_system/issues) or [LinkedIn](https://www.linkedin.com/in/yourprofile/).
+MIT License © 2025 Kevin Long
