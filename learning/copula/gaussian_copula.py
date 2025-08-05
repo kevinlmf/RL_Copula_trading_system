@@ -1,32 +1,44 @@
 import numpy as np
+import scipy.stats as stats
+from sklearn.covariance import EmpiricalCovariance
 
 class GaussianCopula:
     def __init__(self):
-        self.fitted = False
+        self.cov = None
+        self.dim = None
 
-    def fit(self, data):
+    def fit(self, X):
         """
-        Fit the Gaussian Copula to the dataset.
-        For now, just compute and store empirical mean and covariance.
+        X: shape (n_samples, n_assets) — assumed to be returns
         """
-        print("Fitting Gaussian Copula...")
-        self.mean = np.mean(data, axis=0)
-        self.cov = np.cov(data, rowvar=False)
-        self.fitted = True
+        self.dim = X.shape[1]
 
-    def transform(self, window_data):
+        # Step 1: Convert to uniform marginals using ranks
+        ranks = stats.rankdata(X, axis=0) / (X.shape[0] + 1)
+        norm_marginals = stats.norm.ppf(ranks)
+
+        # Step 2: Estimate correlation of normal scores
+        self.cov = EmpiricalCovariance().fit(norm_marginals).covariance_
+
+    def sample(self, n_samples):
         """
-        Transform window data into Copula latent space.
-        For simplicity, return summary statistics as latent features:
-        - Mean and variance for each asset in the window.
+        Sample from the Gaussian copula
+        Returns samples with uniform marginals
         """
-        if not self.fitted:
-            raise ValueError("GaussianCopula must be fitted before calling transform().")
+        z = np.random.multivariate_normal(mean=np.zeros(self.dim), cov=self.cov, size=n_samples)
+        u = stats.norm.cdf(z)
+        return u
 
-        mean_features = np.mean(window_data, axis=0)  # shape: (asset_dim,)
-        var_features = np.var(window_data, axis=0)    # shape: (asset_dim,)
+    def transform(self, X):
+        """
+        Convert original data X into Gaussian copula space
+        (i.e., normal scores)
+        """
+        ranks = stats.rankdata(X, axis=0) / (X.shape[0] + 1)
+        return stats.norm.ppf(ranks)
 
-        # Combine mean and variance into a single latent vector
-        latent_features = np.concatenate([mean_features, var_features])  # shape: (asset_dim * 2,)
-        return latent_features
-
+    def inverse_transform(self, U):
+        """
+        Map uniform marginals back to standard normal marginals
+        """
+        return stats.norm.ppf(U)

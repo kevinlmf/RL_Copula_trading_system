@@ -1,29 +1,25 @@
-import random
 import numpy as np
-import torch
+import random
 
 class ReplayBuffer:
-    def __init__(self, capacity=1_000_000):
+    def __init__(self, capacity=100_000):
         self.capacity = capacity
         self.buffer = []
         self.position = 0
 
-    def push(self, state, action, reward, next_state, done):
+    def add(self, state, action, reward, next_state, done):
+        data = (state, action, reward, next_state, done)
         if len(self.buffer) < self.capacity:
-            self.buffer.append(None)
-        self.buffer[self.position] = (state, action, reward, next_state, done)
+            self.buffer.append(data)
+        else:
+            self.buffer[self.position] = data
         self.position = (self.position + 1) % self.capacity
 
-    def sample(self, batch_size, device):
+    def sample(self, batch_size):
         batch = random.sample(self.buffer, batch_size)
-        states, actions, rewards, next_states, dones = map(np.stack, zip(*batch))
-        return (
-            torch.FloatTensor(states).to(device),
-            torch.FloatTensor(actions).to(device),
-            torch.FloatTensor(rewards).unsqueeze(1).to(device),
-            torch.FloatTensor(next_states).to(device),
-            torch.FloatTensor(dones).unsqueeze(1).to(device)
-        )
+        state, action, reward, next_state, done = map(np.stack, zip(*batch))
+        return state, action, reward, next_state, done
 
     def __len__(self):
         return len(self.buffer)
+

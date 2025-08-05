@@ -1,0 +1,6 @@
+Strategy,Annual Return (%),Sharpe Ratio,Max Drawdown (%)
+Buy & Hold,79.92,1.26,-34.34
+SAC,18.18,0.62,-38.53
+Equal Weight,13.83,0.41,-36.21
+Copula CVaR Opt,14.0,0.41,-36.2
+CPPO,0.44,0.01,-74.83

@@ -1,27 +1,39 @@
 import gym
 import numpy as np
 import pandas as pd
-from learning.copula.t_factor_copula import TFactorCopula
+
+from learning.copula.gaussian_copula import GaussianCopula
+from learning.copula.t_copula import TCopula  # 如果有的话
 
 class CopulaTradingEnv(gym.Env):
-    def __init__(self, data_source="real", window_size=30, initial_cash=1e6):
-        super(CopulaTradingEnv, self).__init__()
-
+    def __init__(self, 
+                 data_path="data/raw_data/real_asset_log_returns_extreme.csv",
+                 window_size=30,
+                 initial_cash=1e6,
+                 copula_type="gaussian"):
+        super().__init__()
+        
         # === Load data ===
-        path = f"data/mid_dimension/real_asset_log_returns_{data_source}.csv"
-        self.df = pd.read_csv(path, index_col=0)
+        self.df = pd.read_csv(data_path, index_col=0)
         self.data = self.df.values
         self.asset_dim = self.data.shape[1]
         self.window_size = window_size
         self.initial_cash = initial_cash
+        self.copula_type = copula_type
 
-        # === Fit t-Factor Copula with fixed latent_dim=3 ===
-        self.copula = TFactorCopula(latent_dim=3)
-        print(f"🔄 Fitting t-Factor Copula | fixed latent_dim=3")
+        # === Fit Copula ===
+        if self.copula_type == "gaussian":
+            self.copula = GaussianCopula()
+        elif self.copula_type == "t":
+            self.copula = TCopula()
+        else:
+            raise ValueError(f"Unsupported copula type: {self.copula_type}")
+
+        print(f"🔄 Fitting {copula_type.title()} Copula...")
         self.copula.fit(self.data)
 
-        # === Define observation & action spaces ===
-        obs_dim = self.window_size * (self.asset_dim + self.copula.latent_dim)
+        # === Define observation & action space ===
+        obs_dim = self.window_size * self.asset_dim
         self.observation_space = gym.spaces.Box(
             low=-np.inf, high=np.inf, shape=(obs_dim,), dtype=np.float32
         )
@@ -29,61 +41,44 @@ class CopulaTradingEnv(gym.Env):
             low=0.0, high=1.0, shape=(self.asset_dim,), dtype=np.float32
         )
 
-        # === Internal state ===
+        # === Internal states ===
         self.current_step = None
         self.cash = None
         self.portfolio_value = None
         self.done = False
 
-        print(f"✅ CopulaTradingEnv initialized | obs_dim={obs_dim}, latent_dim=3, asset_dim={self.asset_dim}")
+        print(f"✅ CopulaTradingEnv initialized | obs_dim={obs_dim}, asset_dim={self.asset_dim}")
 
     def reset(self):
-        """Reset environment to initial state."""
         self.current_step = self.window_size
         self.cash = self.initial_cash
         self.portfolio_value = self.cash
         self.done = False
-        obs = self._compute_observation()
-        print(f"📏 reset() observation shape: {obs.shape}")
-        return obs
+        return self._get_observation()
 
     def step(self, action):
-        """Take one step in the environment."""
         if self.done:
-            raise RuntimeError("Step called after environment is done. Please reset.")
+            raise RuntimeError("Call reset() before using step().")
 
-        # === Normalize action weights and ensure float type ===
-        weights = np.clip(action, 0, 1).astype(np.float64)  # 👈 修复整数导致的类型问题
+        # Normalize weights
+        weights = np.clip(action, 0, 1).astype(np.float64)
         weights /= np.sum(weights) + 1e-8
 
-        # === Get returns and compute reward ===
+        # Asset return
         returns = self.data[self.current_step]
         reward = self.portfolio_value * np.dot(weights, returns)
         self.portfolio_value += reward
 
-        # === Advance environment state ===
+        # Step forward
         self.current_step += 1
         if self.current_step >= len(self.data) - 1:
             self.done = True
 
-        obs = self._compute_observation()
+        obs = self._get_observation()
         info = {"portfolio_value": self.portfolio_value}
-
         return obs, reward, self.done, info
 
-    def _compute_observation(self):
-        """Compute observation: raw returns + copula latent factors."""
-        start_idx = max(0, self.current_step - self.window_size)
-        raw_obs = self.data[start_idx:self.current_step].flatten()
-        latent_obs = self.copula.transform(self.data[start_idx:self.current_step]).flatten()
-        combined_obs = np.concatenate([raw_obs, latent_obs])
-        return combined_obs.astype(np.float32)
-
-
-
-
-
-
-
-
-
+    def _get_observation(self):
+        start = self.current_step - self.window_size
+        window = self.data[start:self.current_step].flatten()
+        return window.astype(np.float32)
