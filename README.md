@@ -83,10 +83,10 @@ python compare_strategies.py
 
 **Kevin Long (kevinlmf)**  
 Graduate Student @ University of Michigan  
-[GitHub](https://github.com/kevinlmf)
+[LinkedIn](https://www.linkedin.com/in/mengfanlong)
 
 ---
 
 ## 📄 License
 
-MIT License © 2025 Kevin Long
+MIT License © 2025 Mengfan Long
